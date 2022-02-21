@@ -1,0 +1,38 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* NÃO TOCAR! FUNCIONANDO */
+
+html {
+  margin: 0;
+  display: flex;
+}
+
+body {
+  min-height: 100vh;
+  flex: 1;
+  display: flex;
+}
+
+#root {
+  flex: 1;
+  min-height: 100%;
+}
+
+/* VERSÃO CORRETA PARA 100% DA TELA */
+/* html {
+  margin: 0;
+  display: flex;
+}
+
+body {
+  min-height: 100vh;
+  flex: 1;
+  display: flex;
+}
+
+#root {
+  flex: 1;
+  min-height: 100%;
+} */
