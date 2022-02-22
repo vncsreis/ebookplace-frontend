@@ -1,7 +1,11 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import axios from "../config/axios";
 import { useAppContext } from "../data/hooks/useAppContext";
+import { Profile } from "../data/models/Profile";
 import { PencilIcon } from "../icons";
 import { tw } from "../utilities/tw";
+import { validateRequest } from "../utilities/validateRequest";
 
 interface Inputs {
   picture: boolean;
@@ -12,7 +16,7 @@ interface Inputs {
 
 export function Settings() {
   const { uiCtx, authCtx } = useAppContext();
-  const { profile } = authCtx;
+  const { profile, token } = authCtx;
   const [inputs, setInputs] = useState<Inputs>({
     picture: false,
     name: false,
@@ -20,26 +24,126 @@ export function Settings() {
     password: false,
   });
   const [name, setName] = useState<string>();
-
+  const [picture, setPicture] = useState("");
+  const [pictureFile, setPictureFile] = useState<File | null>(null);
   const [email, setEmail] = useState<string>();
   const [password, setPassword] = useState<string>("");
   const [confirmPassword, setConfirmPassword] = useState<string>("");
+  const navigate = useNavigate();
+
+  const pictureRef = useRef<HTMLInputElement>(null);
+
+  function updateImage(e: React.ChangeEvent<HTMLInputElement>) {
+    let imageSrc = "";
+    if (e.currentTarget.files) {
+      const pattern = "image/";
+      const file = e.currentTarget.files[0];
+
+      if (file.type.includes(pattern) && file.size < 20 * 1024 * 1024) {
+        imageSrc = URL.createObjectURL(e.currentTarget.files[0]);
+        setPictureFile(e.currentTarget.files[0]);
+        setPicture(imageSrc);
+      } else {
+        alert("File must be image and smaller than 20Mb");
+        if (pictureRef.current) {
+          pictureRef.current.value = "";
+        }
+        setPicture("");
+        setPictureFile(null);
+      }
+    }
+  }
 
   function validateChanges() {
+    let errs = [];
     if (password !== confirmPassword) {
-      window.alert("passwords don't match");
+      errs.push("Passwords don't match");
     }
     if (email?.length === 0 || (inputs.password && password?.length === 0)) {
-      window.alert("fill all fields");
+      errs.push("Fill all fields");
     }
 
-    window.alert("changes saved");
+    if (errs.length > 0) {
+      let message = "";
+      errs.forEach((e) => (message += e + ";"));
+      uiCtx.changeMessage(message);
+      uiCtx.changeConfirmationModal(false);
+      uiCtx.toggleModal();
+      return false;
+    }
+
+    return true;
+  }
+
+  async function handleSubmit() {
+    if (profile && token) {
+      try {
+        const formData = new FormData();
+
+        if (name) {
+          formData.append("name", name);
+        }
+        if (pictureFile) {
+          formData.append("picture", pictureFile);
+        }
+        if (email) {
+          formData.append("email", email);
+        }
+        if (password) {
+          formData.append("password", password);
+        }
+
+        const profileRes = await axios.put(
+          `/user/${profile.id}`,
+          formData,
+          validateRequest(token)
+        );
+
+        const updatedProfile = profileRes.data;
+
+        const prof = new Profile(
+          updatedProfile.id,
+          updatedProfile.name,
+          updatedProfile.email,
+          updatedProfile.picture
+        );
+
+        authCtx.updateProfile(prof);
+        localStorage.setItem("profile", JSON.stringify(prof));
+
+        if (password && confirmPassword) {
+          await axios.put(
+            `/user/${profile.id}/password`,
+            { password },
+            validateRequest(token)
+          );
+          setPassword("");
+          setConfirmPassword("");
+        }
+
+        setInputs({
+          email: false,
+          name: false,
+          password: false,
+          picture: false,
+        });
+
+        uiCtx.changeMessage("Profile updated");
+        uiCtx.changeModalAction(() => navigate("/"));
+        uiCtx.changeConfirmationModal(false);
+        uiCtx.toggleModal();
+      } catch (e) {
+        window.alert(e);
+      }
+    }
   }
 
   useEffect(() => {
-    setName(authCtx.profile?.name as string);
-    setEmail(authCtx.profile?.email as string);
-  }, [authCtx.profile]);
+    if (profile) {
+      setName(profile.name as string);
+      setEmail(profile.email as string);
+    }
+  }, [profile]);
 
   return (
     <div
@@ -73,7 +177,9 @@ export function Settings() {
                 <img
                   className={tw("max-h-full")}
                   src={
-                    profile
+                    picture
+                      ? picture
+                      : profile
                       ? `http://127.0.0.1:3030/static/${profile.picture}`
                       : "/"
                   }
@@ -92,7 +198,16 @@ export function Settings() {
                   "cursor-pointer"
                 )}
               >
-                <PencilIcon width={14} height={14} color="white" />
+                <input
+                  onChange={updateImage}
+                  ref={pictureRef}
+                  id="picture"
+                  type="file"
+                  hidden
+                />
+                <label htmlFor="picture" className={tw("cursor-pointer")}>
+                  <PencilIcon width={16} height={16} color="white" />
+                </label>
               </div>
             </div>
 
@@ -174,7 +289,7 @@ export function Settings() {
                   {inputs.password ? (
                     <input
                       className={tw("text-xl", "text-gray-900")}
-                      type="text"
+                      type="password"
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                     />
@@ -204,7 +319,7 @@ export function Settings() {
                     <span className={tw("italic mr-6")}>Confirm Password:</span>{" "}
                     <input
                       className={tw("text-xl", "text-gray-900")}
-                      type="text"
+                      type="password"
                       value={confirmPassword}
                       onChange={(e) => setConfirmPassword(e.target.value)}
                     />
@@ -215,9 +330,12 @@ export function Settings() {
             <div className={tw("w-full", "mt-auto", "flex justify-end")}>
               <button
                 onClick={() => {
-                  uiCtx.changeMessage("Save changes to profile?");
-                  uiCtx.toggleModal();
-                  uiCtx.changeModalAction(validateChanges);
+                  if (validateChanges()) {
+                    uiCtx.changeMessage("Save changes to profile?");
+                    uiCtx.toggleModal();
+                    uiCtx.changeConfirmationModal(true);
+                    uiCtx.changeModalAction(handleSubmit);
+                  }
                 }}
                 className={tw("p-6 bg-indigo-600 rounded-lg text-white")}
               >
