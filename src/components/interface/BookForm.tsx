@@ -47,6 +47,18 @@ export function BookForm() {
     editMode = true;
   }
 
+  function clearState() {
+    setImage("");
+    setImageFile(null);
+    setTitle("");
+    setAuthor("");
+    setGenre("");
+    setYear("");
+    setSynopsis("");
+    setEpub(null);
+    setGenreArray([]);
+  }
+
   async function handleFormUpload(bookToUpload: BookUpload) {
     try {
       const formData = new FormData();
@@ -337,20 +349,38 @@ export function BookForm() {
                   }
                 }}
               />
-              <button
-                className={tw(
-                  "w-fit",
-                  "px-4 py-2",
-                  "bg-indigo-600",
-                  "rounded-lg",
-                  "text-2xl",
-                  "text-white",
-                  "mt-auto ml-auto"
-                )}
-                type="submit"
-              >
-                Save
-              </button>
+              <div className={tw("mt-auto ml-auto", "flex gap-4")}>
+                <button
+                  className={tw(
+                    "w-fit",
+                    "px-4 py-2",
+                    "bg-red-600",
+                    "rounded-lg",
+                    "text-2xl",
+                    "text-white"
+                  )}
+                  type="button"
+                  onClick={() => {
+                    clearState();
+                    navigate("/");
+                  }}
+                >
+                  Cancel
+                </button>
+                <button
+                  className={tw(
+                    "w-fit",
+                    "px-4 py-2",
+                    "bg-indigo-600",
+                    "rounded-lg",
+                    "text-2xl",
+                    "text-white"
+                  )}
+                  type="submit"
+                >
+                  Save
+                </button>
+              </div>
             </div>
           </form>
         </div>
