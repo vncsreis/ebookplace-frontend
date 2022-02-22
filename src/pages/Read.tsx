@@ -23,9 +23,7 @@ export function Read() {
   useEffect(() => {
     async function getBook(bookId: string) {
       const res = await axios.get(`/book/${bookId}`, validateRequest(token));
-      console.log(res.data);
       const book = generateBook(res.data);
-      console.log(book);
       if (book) {
         setBook(book);
       }

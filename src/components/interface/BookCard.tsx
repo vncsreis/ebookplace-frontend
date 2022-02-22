@@ -30,7 +30,6 @@ export function BookCard({ book, handleToggleFavourite }: BookCardProps) {
           onClick={(e) => {
             e.preventDefault();
             handleToggleFavourite();
-            console.log("toggle favourite on backend");
           }}
         >
           {book.favourite ? (
