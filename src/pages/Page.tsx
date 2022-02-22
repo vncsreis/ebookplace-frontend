@@ -8,9 +8,14 @@ export function PageLayout() {
 
   function renderModal() {
     if (uiCtx.isModalOpen) {
-      return <Modal text={uiCtx.message} confirmation />;
+      return (
+        <Modal
+          text={uiCtx.message}
+          confirmation={uiCtx.confirmationModal ? true : false}
+        />
+      );
     } else {
-      return <span />;
+      return null;
     }
   }
 

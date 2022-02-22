@@ -57,20 +57,7 @@ export function BookPage() {
           },
         });
         const resBook = res.data;
-        const newBook = new BookModel(
-          resBook.id,
-          resBook.title,
-          resBook.author,
-          resBook.year,
-          resBook.image,
-          resBook.epub,
-          resBook.genre,
-          resBook.synopsis,
-          resBook.favourite,
-          resBook.addedAt,
-          resBook.lastRead,
-          resBook.userId
-        );
+        const newBook = generateBook(resBook);
         if (newBook) {
           setChosenBook(newBook);
         } else {
@@ -83,7 +70,7 @@ export function BookPage() {
     if (params.book && token) {
       loadBook();
     }
-  }, [chosenBook, navigate, params.book, token]);
+  }, [navigate, params.book, token]);
 
   const { uiCtx } = useAppContext();
 
@@ -178,6 +165,7 @@ export function BookPage() {
                     uiCtx.changeMessage(
                       `Delete "${chosenBook?.title}"? This action cannot be undone.`
                     );
+                    uiCtx.changeConfirmationModal(true);
                     uiCtx.changeModalAction(() =>
                       handleDeleteBook(chosenBook.id)
                     );

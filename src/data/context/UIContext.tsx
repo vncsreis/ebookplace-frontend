@@ -9,6 +9,8 @@ interface UIContextProps {
   changeModalAction: (newAction: (...params: unknown[]) => unknown) => void;
   isDarkMode: boolean;
   toggleDarkMode: () => void;
+  confirmationModal: boolean;
+  changeConfirmationModal: (confirmation: boolean) => void;
 }
 
 export const UIContext = createContext<UIContextProps>({
@@ -20,6 +22,8 @@ export const UIContext = createContext<UIContextProps>({
   changeModalAction: (newAction: (...params: unknown[]) => unknown) => {},
   isDarkMode: false,
   toggleDarkMode: () => {},
+  confirmationModal: false,
+  changeConfirmationModal: () => {},
 });
 
 interface UIProviderProps {
@@ -31,6 +35,7 @@ export function UIProvider(props: UIProviderProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalAction, setModalAction] = useState<() => void>(() => () => {});
   const [isDarkMode, setIsDarkMode] = useState(false);
+  const [confirmationModal, changeConfirmationModal] = useState(false);
   const toggleDarkMode = () => {
     setIsDarkMode((prevState) => !prevState);
   };
@@ -41,6 +46,10 @@ export function UIProvider(props: UIProviderProps) {
 
   function toggleModal() {
     setIsModalOpen(!isModalOpen);
+  }
+
+  function changeModalConfirmation(newConfirmation: boolean) {
+    changeConfirmationModal(newConfirmation);
   }
 
   useEffect(() => {
@@ -64,6 +73,8 @@ export function UIProvider(props: UIProviderProps) {
         changeModalAction,
         isDarkMode,
         toggleDarkMode,
+        confirmationModal,
+        changeConfirmationModal: changeModalConfirmation,
       }}
     >
       {props.children}

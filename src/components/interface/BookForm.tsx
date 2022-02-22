@@ -85,6 +85,7 @@ export function BookForm() {
         const uploadedBook = res.data;
         uiCtx.changeModalAction(() => navigate("/mybooks"));
         uiCtx.changeMessage(`Book ${uploadedBook.title} updated`);
+        uiCtx.changeConfirmationModal(false);
         uiCtx.toggleModal();
         return;
       }
@@ -92,6 +93,7 @@ export function BookForm() {
       const uploadedBook = res.data;
       uiCtx.changeModalAction(() => navigate("/mybooks"));
       uiCtx.changeMessage(`Book ${uploadedBook.title} uploaded`);
+      uiCtx.changeConfirmationModal(false);
       uiCtx.toggleModal();
     } catch (e) {
       window.alert(e);
@@ -175,7 +177,6 @@ export function BookForm() {
           synopsis,
           userId: profile.id,
         };
-        console.log(book);
         handleFormUpload(book);
       }
     } else {
